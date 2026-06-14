@@ -87,5 +87,7 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes,hosting
 - Step 2: Email/password login, проверка `admin: true`, экран отказа в доступе и protected routes.
 - Step 3: список, поиск, создание, просмотр, редактирование и удаление гидов.
 - Step 4: список, создание, просмотр, редактирование и удаление компаний.
+- Step 5: поиск гидов, добавление и удаление email в blacklist компании.
+- Step 6: список, создание, просмотр, редактирование и удаление экскурсий с автоматическим `hasSpots`.
 
-Blacklist компаний, экскурсии и заявки относятся к следующим этапам из `INSTRUCTIONS.md`.
+Модерация заявок относится к следующему этапу из `INSTRUCTIONS.md`.

@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarDays,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -14,6 +15,7 @@ const navigation = [
   { to: '/', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/guides', label: 'Гиды', icon: Users, end: false },
   { to: '/companies', label: 'Компании', icon: Building2, end: false },
+  { to: '/excursions', label: 'Экскурсии', icon: CalendarDays, end: false },
 ];
 
 export function AppLayout() {

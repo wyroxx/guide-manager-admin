@@ -1,5 +1,7 @@
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
@@ -98,4 +100,28 @@ export async function updateCompany(
 
 export async function deleteCompany(companyId: string) {
   await deleteDoc(doc(companiesCollection, companyId));
+}
+
+export async function addGuideToCompanyBanList(
+  companyId: string,
+  guideEmail: string,
+  actorUid: string,
+) {
+  await updateDoc(doc(companiesCollection, companyId), {
+    banList: arrayUnion(guideEmail.trim().toLowerCase()),
+    updatedAt: serverTimestamp(),
+    updatedBy: actorUid,
+  });
+}
+
+export async function removeGuideFromCompanyBanList(
+  companyId: string,
+  guideEmail: string,
+  actorUid: string,
+) {
+  await updateDoc(doc(companiesCollection, companyId), {
+    banList: arrayRemove(guideEmail.trim()),
+    updatedAt: serverTimestamp(),
+    updatedBy: actorUid,
+  });
 }

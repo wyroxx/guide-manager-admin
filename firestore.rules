@@ -7,7 +7,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
+      return isSignedIn()
+        && 'admin' in request.auth.token
+        && request.auth.token.admin == true;
     }
 
     function userEmail() {
@@ -28,6 +30,34 @@ service cloud.firestore {
         && exists(guidePath(request.auth.uid))
         && get(guidePath(request.auth.uid)).data.email == userEmail()
         && isGuideLevel(get(guidePath(request.auth.uid)).data.level);
+    }
+
+    function validExcursionData(data) {
+      let companyPath = /databases/$(database)/documents/companies/$(data.companyId);
+
+      return data.title is string
+        && data.title.size() > 0
+        && data.companyId is string
+        && exists(companyPath)
+        && data.companyName == get(companyPath).data.name
+        && data.startDate is timestamp
+        && data.endDate is timestamp
+        && data.endDate > data.startDate
+        && data.route is string
+        && data.meetingPlace is string
+        && data.requiredGuides is int
+        && data.requiredGuides > 0
+        && data.requiredLevels is list
+        && data.requiredLevels.size() > 0
+        && data.requiredLevels.hasOnly(['trainee', 'junior', 'middle', 'senior'])
+        && data.maxParticipants is int
+        && data.maxParticipants > 0
+        && data.hasLunch is bool
+        && data.hasMasterclass is bool
+        && data.excursionType is string
+        && data.paymentStatus in ['paid', 'unpaid']
+        && data.assignedGuides is list
+        && data.hasSpots == (data.assignedGuides.size() < data.requiredGuides);
     }
 
     function validApplicationCreate(excursionId, applicationId) {
@@ -79,7 +109,9 @@ service cloud.firestore {
 
     match /excursions/{excursionId} {
       allow read: if isAdmin() || isApprovedGuide();
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && validExcursionData(request.resource.data);
+      allow delete: if isAdmin();
 
       match /applications/{applicationId} {
         allow get: if isAdmin()

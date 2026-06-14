@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { companyKeys, deleteCompany, getCompany } from '../entities/company/company.api';
+import { CompanyBlacklist } from '../features/company-blacklist/CompanyBlacklist';
 import { getErrorMessage } from '../shared/lib/errors';
 import { formatTimestamp } from '../shared/lib/format';
 import { ErrorState, PageLoading } from '../shared/ui/AsyncState';
@@ -56,6 +57,8 @@ export function CompanyDetailsPage() {
           <div className="details-wide"><dt>Заметки</dt><dd className="preserve-lines">{company.notes || '—'}</dd></div>
         </dl>
       </section>
+
+      <CompanyBlacklist companyId={company.id} banList={company.banList} />
 
       <section className="danger-zone">
         <div>

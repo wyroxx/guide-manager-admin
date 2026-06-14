@@ -7,6 +7,10 @@ import { CompanyCreatePage } from '../pages/CompanyCreatePage';
 import { CompanyDetailsPage } from '../pages/CompanyDetailsPage';
 import { CompanyEditPage } from '../pages/CompanyEditPage';
 import { DashboardPage } from '../pages/DashboardPage';
+import { ExcursionCreatePage } from '../pages/ExcursionCreatePage';
+import { ExcursionDetailsPage } from '../pages/ExcursionDetailsPage';
+import { ExcursionEditPage } from '../pages/ExcursionEditPage';
+import { ExcursionsPage } from '../pages/ExcursionsPage';
 import { GuideCreatePage } from '../pages/GuideCreatePage';
 import { GuideDetailsPage } from '../pages/GuideDetailsPage';
 import { GuideEditPage } from '../pages/GuideEditPage';
@@ -38,6 +42,11 @@ export function AppRouter() {
           <Route path="companies/new" element={<CompanyCreatePage />} />
           <Route path="companies/:companyId" element={<CompanyDetailsPage />} />
           <Route path="companies/:companyId/edit" element={<CompanyEditPage />} />
+
+          <Route path="excursions" element={<ExcursionsPage />} />
+          <Route path="excursions/new" element={<ExcursionCreatePage />} />
+          <Route path="excursions/:excursionId" element={<ExcursionDetailsPage />} />
+          <Route path="excursions/:excursionId/edit" element={<ExcursionEditPage />} />
         </Route>
       </Route>
 

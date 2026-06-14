@@ -2,12 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Building2, CalendarDays, Plus, Route, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { companyKeys, listCompanies } from '../entities/company/company.api';
+import { excursionKeys, listExcursions } from '../entities/excursion/excursion.api';
 import { guideKeys, listGuides } from '../entities/guide/guide.api';
 import { PageHeader } from '../shared/ui/PageHeader';
 
 export function DashboardPage() {
   const guidesQuery = useQuery({ queryKey: guideKeys.all, queryFn: listGuides });
   const companiesQuery = useQuery({ queryKey: companyKeys.all, queryFn: listCompanies });
+  const excursionsQuery = useQuery({ queryKey: excursionKeys.all, queryFn: listExcursions });
+  const upcomingExcursions = (excursionsQuery.data ?? []).filter(
+    (excursion) => excursion.startDate && excursion.startDate.toMillis() >= Date.now(),
+  );
+  const excursionsNeedingGuides = upcomingExcursions.filter((excursion) => excursion.hasSpots);
 
   const cards = [
     {
@@ -22,8 +28,18 @@ export function DashboardPage() {
       icon: Building2,
       to: '/companies',
     },
-    { label: 'Ближайшие экскурсии', value: '—', icon: CalendarDays },
-    { label: 'Нужны гиды', value: '—', icon: Route },
+    {
+      label: 'Ближайшие экскурсии',
+      value: excursionsQuery.isPending ? '…' : String(upcomingExcursions.length),
+      icon: CalendarDays,
+      to: '/excursions',
+    },
+    {
+      label: 'Нужны гиды',
+      value: excursionsQuery.isPending ? '…' : String(excursionsNeedingGuides.length),
+      icon: Route,
+      to: '/excursions',
+    },
   ];
 
   return (
@@ -60,6 +76,7 @@ export function DashboardPage() {
         <div className="quick-action-links">
           <Link className="button-link" to="/guides/new"><Plus size={17} /> Новый гид</Link>
           <Link className="button-link secondary-button" to="/companies/new"><Plus size={17} /> Новая компания</Link>
+          <Link className="button-link secondary-button" to="/excursions/new"><Plus size={17} /> Новая экскурсия</Link>
         </div>
       </section>
     </main>
