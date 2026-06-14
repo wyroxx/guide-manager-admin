@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function userEmail() {
+      return request.auth.token.email;
+    }
+
+    function guidePath(uid) {
+      return /databases/$(database)/documents/guides/$(uid);
+    }
+
+    function isGuideLevel(level) {
+      return level in ['trainee', 'junior', 'middle', 'senior'];
+    }
+
+    function isApprovedGuide() {
+      return isSignedIn()
+        && userEmail() is string
+        && exists(guidePath(request.auth.uid))
+        && get(guidePath(request.auth.uid)).data.email == userEmail()
+        && isGuideLevel(get(guidePath(request.auth.uid)).data.level);
+    }
+
+    function validApplicationCreate(excursionId, applicationId) {
+      let excursionPath = /databases/$(database)/documents/excursions/$(excursionId);
+      let excursion = get(excursionPath).data;
+      let companyPath = /databases/$(database)/documents/companies/$(excursion.companyId);
+
+      return isApprovedGuide()
+        && applicationId == request.auth.uid
+        && exists(excursionPath)
+        && exists(companyPath)
+        && request.resource.data.keys().hasOnly([
+          'guideUid',
+          'guideEmail',
+          'status',
+          'excursionId',
+          'excursionTitle',
+          'excursionStartDate',
+          'excursionMaxParticipants',
+          'createdAt'
+        ])
+        && request.resource.data.guideUid == request.auth.uid
+        && request.resource.data.guideEmail == userEmail()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.excursionId == excursionId
+        && request.resource.data.excursionTitle == excursion.title
+        && request.resource.data.excursionStartDate == excursion.startDate
+        && request.resource.data.excursionMaxParticipants == excursion.maxParticipants
+        && request.resource.data.createdAt == request.time
+        && excursion.hasSpots == true
+        && excursion.requiredLevels.hasAny([
+          get(guidePath(request.auth.uid)).data.level
+        ])
+        && !(userEmail() in excursion.assignedGuides)
+        && !(userEmail() in get(companyPath).data.banList);
+    }
+
+    match /guides/{guideId} {
+      allow get: if isAdmin()
+        || (isSignedIn() && guideId == request.auth.uid);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /companies/{companyId} {
+      allow read: if isAdmin() || isApprovedGuide();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /excursions/{excursionId} {
+      allow read: if isAdmin() || isApprovedGuide();
+      allow create, update, delete: if isAdmin();
+
+      match /applications/{applicationId} {
+        allow get: if isAdmin()
+          || (isApprovedGuide() && applicationId == request.auth.uid);
+        allow list: if isAdmin()
+          || (isApprovedGuide() && resource.data.guideUid == request.auth.uid);
+        allow create: if validApplicationCreate(excursionId, applicationId);
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /{path=**}/applications/{applicationId} {
+      allow read: if isAdmin()
+        || (isApprovedGuide() && resource.data.guideUid == request.auth.uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

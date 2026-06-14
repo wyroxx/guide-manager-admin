@@ -1,62 +1,91 @@
-# Tour Guide Manager Admin
+# Guide Manager Admin
 
-Веб приложение для админов Guide Manager. Flutter клиент - https://github.com/wyroxx/guide-manager
+Web-админка Guide Manager на React, TypeScript и Firebase. Production backend не используется: приложение работает через Firebase Auth, Firestore Web SDK и Firestore Security Rules.
 
-## Состав
+## Требования
 
-- `frontend/` - React, TypeScript и Vite.
-- `backend/` - FastAPI API с Firebase Firestore.
-- `tests/` - тесты API.
-- `start.py` - совместный запуск frontend и backend для разработки.
+- Node.js 20+
+- Firebase project `tourapp-66e02`
+- включённый Email/Password provider в Firebase Authentication
+- созданная Firestore Database
 
-## Настройка
-
-Требуются Node.js, npm и Python 3.
+## Локальная настройка
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -r requirements.txt
 npm install
-npm --prefix frontend install
+cp .env.example .env.local
 ```
 
-Скачайте JSON-ключ service account в Firebase Console и задайте путь к нему:
+Заполните в `.env.local` публичные значения Firebase Web App из Firebase Console → Project settings → Your apps. Service account и private key в frontend env добавлять нельзя.
+
+Запуск:
 
 ```bash
-cp .env.example .env
+npm run dev
 ```
 
-Затем отредактируйте `FIREBASE_CREDENTIALS` в `.env`.
-
-## Запуск
+Проверка production-сборки:
 
 ```bash
-source .venv/bin/activate
-python3 start.py
+npm run typecheck
+npm run build
 ```
 
-Frontend будет доступен на `http://localhost:3000`, backend - на `http://localhost:8000`.
+## Первый администратор
 
-## Запуск в Docker
+Script работает локально через Firebase Admin SDK и сохраняет существующие custom claims пользователя.
 
-Укажите абсолютный путь к Firebase service account в `.env`:
+Вариант с Application Default Credentials:
 
 ```bash
-cp .env.example .env
+export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/service-account.json
+npm run admin:set -- admin@email.com
 ```
 
-Запустите frontend и backend:
+Script автоматически читает `FIREBASE_CREDENTIALS` из корневого `.env`, поэтому
+при уже настроенном проекте достаточно выполнить:
 
 ```bash
-docker compose up --build
+npm run admin:set -- admin@email.com
 ```
 
-Frontend будет доступен на `http://localhost:3000`, backend - на `http://localhost:8000`. Firebase-ключ монтируется в контейнер только для чтения и не включается в образ.
-
-## Проверка
+Значение также можно передать непосредственно через окружение:
 
 ```bash
-python3 -m pytest
-npm --prefix frontend run build
+FIREBASE_CREDENTIALS=/absolute/path/service-account.json \
+  npm run admin:set -- admin@email.com
 ```
+
+После назначения claim пользователь должен войти заново, чтобы получить новый ID token.
+
+## Firebase
+
+В репозитории находятся:
+
+- `firebase.json` — Firestore, Hosting и локальные emulator ports;
+- `.firebaserc` — default project `tourapp-66e02`;
+- `firestore.rules` — доступ админов и допущенных гидов;
+- `firestore.indexes.json` — декларация индексов.
+
+Перед deploy проверьте активный Firebase CLI account и project:
+
+```bash
+npx firebase-tools projects:list
+npx firebase-tools use
+```
+
+Deploy rules и приложения:
+
+```bash
+npm run build
+npx firebase-tools deploy --only firestore:rules,firestore:indexes,hosting
+```
+
+## Реализованные этапы
+
+- Step 1: Firebase client config, Firestore rules, Hosting config, admin-claim script.
+- Step 2: Email/password login, проверка `admin: true`, экран отказа в доступе и protected routes.
+- Step 3: список, поиск, создание, просмотр, редактирование и удаление гидов.
+- Step 4: список, создание, просмотр, редактирование и удаление компаний.
+
+Blacklist компаний, экскурсии и заявки относятся к следующим этапам из `INSTRUCTIONS.md`.
