@@ -3,6 +3,7 @@ import { LockKeyhole } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthProvider';
+import { ThemeToggle } from '../features/theme/ThemeToggle';
 
 const AUTH_ERRORS: Record<string, string> = {
   'auth/invalid-credential': 'Неверный email или пароль.',
@@ -37,13 +38,14 @@ export function LoginPage() {
 
   return (
     <main className="auth-page">
+      <ThemeToggle compact className="auth-theme-toggle" />
       <section className="auth-intro">
-        <p className="eyebrow">Guide Manager</p>
-        <h1>Рабочее пространство команды экскурсий.</h1>
-        <p>
-          Управляйте гидами, компаниями и расписанием из одной спокойной,
-          понятной панели.
-        </p>
+        <img className="auth-logo" src="/traveltech.png" alt="Технологии путешествий" />
+        <div className="auth-intro-copy">
+          <p className="eyebrow">Guide Manager</p>
+          <h1>Административная панель</h1>
+          <p>Гиды, экскурсии и заявки в одном рабочем пространстве.</p>
+        </div>
       </section>
 
       <section className="auth-card" aria-labelledby="login-title">

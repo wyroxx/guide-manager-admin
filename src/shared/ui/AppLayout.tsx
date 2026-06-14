@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { applicationKeys, listApplications } from '../../entities/application/application.api';
+import { ThemeToggle } from '../../features/theme/ThemeToggle';
 
 const navigation = [
   { to: '/', label: 'Обзор', icon: LayoutDashboard, end: true },
@@ -66,6 +67,7 @@ export function AppLayout() {
         </nav>
 
         <div className="sidebar-account">
+          <ThemeToggle />
           <span>{user?.email}</span>
           <button className="sidebar-logout" type="button" onClick={() => void logout()}>
             <LogOut size={17} />
@@ -89,6 +91,7 @@ export function AppLayout() {
             <Menu size={21} />
           </button>
           <span>Guide Manager</span>
+          <ThemeToggle compact />
         </header>
         <Outlet />
       </div>
