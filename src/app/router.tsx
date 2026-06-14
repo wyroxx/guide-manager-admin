@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '../features/auth/ProtectedRoute';
 import { PublicOnlyRoute } from '../features/auth/PublicOnlyRoute';
 import { AccessDeniedPage } from '../pages/AccessDeniedPage';
+import { ApplicationsPage } from '../pages/ApplicationsPage';
 import { CompaniesPage } from '../pages/CompaniesPage';
 import { CompanyCreatePage } from '../pages/CompanyCreatePage';
 import { CompanyDetailsPage } from '../pages/CompanyDetailsPage';
@@ -47,6 +48,9 @@ export function AppRouter() {
           <Route path="excursions/new" element={<ExcursionCreatePage />} />
           <Route path="excursions/:excursionId" element={<ExcursionDetailsPage />} />
           <Route path="excursions/:excursionId/edit" element={<ExcursionEditPage />} />
+          <Route path="excursions/:excursionId/applications" element={<ApplicationsPage />} />
+
+          <Route path="applications" element={<ApplicationsPage />} />
         </Route>
       </Route>
 

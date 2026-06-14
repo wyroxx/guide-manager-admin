@@ -95,6 +95,43 @@ service cloud.firestore {
         && !(userEmail() in get(companyPath).data.banList);
     }
 
+    function validApplicationDecision(excursionId) {
+      let excursionPath = /databases/$(database)/documents/excursions/$(excursionId);
+
+      return isAdmin()
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['accepted', 'rejected']
+        && request.resource.data.guideUid == resource.data.guideUid
+        && request.resource.data.guideEmail == resource.data.guideEmail
+        && request.resource.data.excursionId == resource.data.excursionId
+        && request.resource.data.excursionTitle == resource.data.excursionTitle
+        && request.resource.data.excursionStartDate == resource.data.excursionStartDate
+        && request.resource.data.excursionMaxParticipants == resource.data.excursionMaxParticipants
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.decidedAt == request.time
+        && request.resource.data.decidedBy == request.auth.uid
+        && (
+          !('decisionComment' in request.resource.data)
+          || (
+            request.resource.data.decisionComment is string
+            && request.resource.data.decisionComment.size() <= 500
+          )
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'decidedAt',
+          'decidedBy',
+          'decisionComment'
+        ])
+        && (
+          request.resource.data.status == 'rejected'
+          || (
+            request.resource.data.guideEmail in getAfter(excursionPath).data.assignedGuides
+            && validExcursionData(getAfter(excursionPath).data)
+          )
+        );
+    }
+
     match /guides/{guideId} {
       allow get: if isAdmin()
         || (isSignedIn() && guideId == request.auth.uid);
@@ -119,7 +156,8 @@ service cloud.firestore {
         allow list: if isAdmin()
           || (isApprovedGuide() && resource.data.guideUid == request.auth.uid);
         allow create: if validApplicationCreate(excursionId, applicationId);
-        allow update, delete: if isAdmin();
+        allow update: if validApplicationDecision(excursionId);
+        allow delete: if isAdmin();
       }
     }
 

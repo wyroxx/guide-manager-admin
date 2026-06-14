@@ -1,26 +1,34 @@
 import {
   Building2,
   CalendarDays,
+  ClipboardCheck,
   LayoutDashboard,
   LogOut,
   Menu,
   Users,
   X,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { applicationKeys, listApplications } from '../../entities/application/application.api';
 
 const navigation = [
   { to: '/', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/guides', label: 'Гиды', icon: Users, end: false },
   { to: '/companies', label: 'Компании', icon: Building2, end: false },
   { to: '/excursions', label: 'Экскурсии', icon: CalendarDays, end: false },
+  { to: '/applications', label: 'Заявки', icon: ClipboardCheck, end: false },
 ];
 
 export function AppLayout() {
   const { logout, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const applicationsQuery = useQuery({ queryKey: applicationKeys.all, queryFn: listApplications });
+  const pendingApplications = (applicationsQuery.data ?? []).filter(
+    (application) => application.status === 'pending',
+  ).length;
 
   return (
     <div className="app-shell">
@@ -50,6 +58,9 @@ export function AppLayout() {
             >
               <Icon size={19} />
               {label}
+              {to === '/applications' && pendingApplications > 0 && (
+                <span className="nav-badge">{pendingApplications}</span>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -1,17 +1,42 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Plus, Search } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { companyKeys, listCompanies } from '../entities/company/company.api';
 import { excursionKeys, listExcursions } from '../entities/excursion/excursion.api';
-import { PAYMENT_STATUS_LABELS } from '../entities/excursion/excursion.types';
+import {
+  ExcursionCalendar,
+  type CalendarView,
+} from '../features/excursion-calendar/ExcursionCalendar';
+import {
+  formatCalendarTitle,
+  shiftCalendarDate,
+} from '../shared/lib/calendar';
 import { getErrorMessage } from '../shared/lib/errors';
-import { formatDateRange } from '../shared/lib/format';
 import { ErrorState, PageLoading } from '../shared/ui/AsyncState';
 import { PageHeader } from '../shared/ui/PageHeader';
 
+const CALENDAR_VIEWS: Array<{ value: CalendarView; label: string }> = [
+  { value: 'month', label: 'Месяц' },
+  { value: 'week', label: 'Неделя' },
+  { value: 'day', label: 'День' },
+];
+
+function initialView(): CalendarView {
+  const saved = window.localStorage.getItem('excursions-calendar-view');
+  return saved === 'week' || saved === 'day' ? saved : 'month';
+}
+
 export function ExcursionsPage() {
   const [search, setSearch] = useState('');
+  const [view, setView] = useState<CalendarView>(initialView);
+  const [anchorDate, setAnchorDate] = useState(() => new Date());
   const excursionsQuery = useQuery({ queryKey: excursionKeys.all, queryFn: listExcursions });
   const companiesQuery = useQuery({ queryKey: companyKeys.all, queryFn: listCompanies });
   const companyNames = useMemo(
@@ -31,12 +56,26 @@ export function ExcursionsPage() {
     });
   }, [companyNames, excursionsQuery.data, search]);
 
+  const withoutDates = filteredExcursions.filter(
+    (excursion) => !excursion.startDate || !excursion.endDate,
+  ).length;
+
+  function changeView(nextView: CalendarView) {
+    setView(nextView);
+    window.localStorage.setItem('excursions-calendar-view', nextView);
+  }
+
+  function selectDay(date: Date) {
+    setAnchorDate(date);
+    changeView('day');
+  }
+
   return (
-    <main className="page-content">
+    <main className="page-content calendar-page">
       <PageHeader
         eyebrow="Расписание"
         title="Экскурсии"
-        description="Даты, требования к гидам и заполненность экскурсий."
+        description="Календарь экскурсий, требования к гидам и заполненность команды."
         actions={(
           <Link className="button-link" to="/excursions/new">
             <Plus size={18} />
@@ -45,7 +84,7 @@ export function ExcursionsPage() {
         )}
       />
 
-      <div className="toolbar">
+      <div className="calendar-filter-row">
         <label className="search-field">
           <Search size={18} />
           <input
@@ -55,7 +94,7 @@ export function ExcursionsPage() {
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
-        <span className="result-count">Найдено: {filteredExcursions.length}</span>
+        <span className="result-count">Экскурсий: {filteredExcursions.length}</span>
       </div>
 
       {excursionsQuery.isPending && <PageLoading />}
@@ -75,41 +114,60 @@ export function ExcursionsPage() {
       )}
 
       {excursionsQuery.isSuccess && filteredExcursions.length > 0 && (
-        <div className="data-table-wrap">
-          <table className="data-table excursions-table">
-            <thead>
-              <tr>
-                <th>Экскурсия</th>
-                <th>Дата</th>
-                <th>Компания</th>
-                <th>Гиды</th>
-                <th>Оплата</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExcursions.map((excursion) => (
-                <tr key={excursion.id}>
-                  <td>
-                    <Link className="entity-link" to={`/excursions/${excursion.id}`}>{excursion.title}</Link>
-                    <span className="cell-secondary">{excursion.excursionType || 'Тип не указан'}</span>
-                  </td>
-                  <td>{formatDateRange(excursion.startDate, excursion.endDate)}</td>
-                  <td>{excursion.companyName || companyNames.get(excursion.companyId) || 'Компания не найдена'}</td>
-                  <td>
-                    <span className={`spots-badge ${excursion.hasSpots ? 'spots-open' : 'spots-full'}`}>
-                      {excursion.assignedGuides.length}/{excursion.requiredGuides}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`payment-badge payment-${excursion.paymentStatus}`}>
-                      {PAYMENT_STATUS_LABELS[excursion.paymentStatus]}
-                    </span>
-                  </td>
-                </tr>
+        <section className="calendar-shell">
+          <header className="calendar-toolbar">
+            <div className="calendar-navigation">
+              <button
+                className="calendar-icon-button"
+                type="button"
+                aria-label="Предыдущий период"
+                onClick={() => setAnchorDate((date) => shiftCalendarDate(date, view, -1))}
+              >
+                <ChevronLeft size={19} />
+              </button>
+              <button className="today-button" type="button" onClick={() => setAnchorDate(new Date())}>
+                Сегодня
+              </button>
+              <button
+                className="calendar-icon-button"
+                type="button"
+                aria-label="Следующий период"
+                onClick={() => setAnchorDate((date) => shiftCalendarDate(date, view, 1))}
+              >
+                <ChevronRight size={19} />
+              </button>
+            </div>
+
+            <h2>{formatCalendarTitle(anchorDate, view)}</h2>
+
+            <div className="calendar-view-switch" aria-label="Режим календаря">
+              {CALENDAR_VIEWS.map((option) => (
+                <button
+                  className={view === option.value ? 'active' : ''}
+                  type="button"
+                  key={option.value}
+                  onClick={() => changeView(option.value)}
+                >
+                  {option.label}
+                </button>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </header>
+
+          {withoutDates > 0 && (
+            <div className="calendar-warning">
+              {withoutDates} {withoutDates === 1 ? 'экскурсия не отображена' : 'экскурсии не отображены'}: не заполнены даты.
+            </div>
+          )}
+
+          <ExcursionCalendar
+            anchorDate={anchorDate}
+            companyNames={companyNames}
+            excursions={filteredExcursions}
+            view={view}
+            onSelectDay={selectDay}
+          />
+        </section>
       )}
     </main>
   );

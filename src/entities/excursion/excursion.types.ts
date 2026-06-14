@@ -48,11 +48,3 @@ export interface ExcursionInput {
   excursionType: string;
   paymentStatus: PaymentStatus;
 }
-
-export interface ExcursionApplicationSummary {
-  id: string;
-  guideUid: string;
-  guideEmail: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: Timestamp | null;
-}

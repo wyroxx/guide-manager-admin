@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { Building2, CalendarDays, Plus, Route, Users } from 'lucide-react';
+import { Building2, CalendarDays, ClipboardCheck, Plus, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { companyKeys, listCompanies } from '../entities/company/company.api';
+import { applicationKeys, listApplications } from '../entities/application/application.api';
 import { excursionKeys, listExcursions } from '../entities/excursion/excursion.api';
 import { guideKeys, listGuides } from '../entities/guide/guide.api';
 import { PageHeader } from '../shared/ui/PageHeader';
@@ -10,10 +11,13 @@ export function DashboardPage() {
   const guidesQuery = useQuery({ queryKey: guideKeys.all, queryFn: listGuides });
   const companiesQuery = useQuery({ queryKey: companyKeys.all, queryFn: listCompanies });
   const excursionsQuery = useQuery({ queryKey: excursionKeys.all, queryFn: listExcursions });
+  const applicationsQuery = useQuery({ queryKey: applicationKeys.all, queryFn: listApplications });
   const upcomingExcursions = (excursionsQuery.data ?? []).filter(
     (excursion) => excursion.startDate && excursion.startDate.toMillis() >= Date.now(),
   );
-  const excursionsNeedingGuides = upcomingExcursions.filter((excursion) => excursion.hasSpots);
+  const pendingApplications = (applicationsQuery.data ?? []).filter(
+    (application) => application.status === 'pending',
+  );
 
   const cards = [
     {
@@ -35,10 +39,10 @@ export function DashboardPage() {
       to: '/excursions',
     },
     {
-      label: 'Нужны гиды',
-      value: excursionsQuery.isPending ? '…' : String(excursionsNeedingGuides.length),
-      icon: Route,
-      to: '/excursions',
+      label: 'Новые заявки',
+      value: applicationsQuery.isPending ? '…' : String(pendingApplications.length),
+      icon: ClipboardCheck,
+      to: '/applications',
     },
   ];
 
@@ -47,7 +51,7 @@ export function DashboardPage() {
       <PageHeader
         eyebrow="Панель управления"
         title="Добрый день"
-        description="Управляйте доступом гидов и базой компаний Guide Manager."
+        description="Управляйте гидами, компаниями, расписанием экскурсий и новыми заявками."
       />
 
       <section className="stat-grid" aria-label="Сводка">
@@ -77,6 +81,7 @@ export function DashboardPage() {
           <Link className="button-link" to="/guides/new"><Plus size={17} /> Новый гид</Link>
           <Link className="button-link secondary-button" to="/companies/new"><Plus size={17} /> Новая компания</Link>
           <Link className="button-link secondary-button" to="/excursions/new"><Plus size={17} /> Новая экскурсия</Link>
+          <Link className="button-link secondary-button" to="/applications"><ClipboardCheck size={17} /> Открыть заявки</Link>
         </div>
       </section>
     </main>

@@ -17,7 +17,6 @@ import { db } from '../../firebase/client';
 import { GUIDE_LEVELS, type GuideLevel } from '../guide/guide.types';
 import {
   type Excursion,
-  type ExcursionApplicationSummary,
   type ExcursionInput,
   type PaymentStatus,
 } from './excursion.types';
@@ -27,7 +26,6 @@ const excursionsCollection = collection(db, 'excursions');
 export const excursionKeys = {
   all: ['excursions'] as const,
   detail: (excursionId: string) => ['excursions', excursionId] as const,
-  applications: (excursionId: string) => ['excursions', excursionId, 'applications'] as const,
 };
 
 function guideLevels(value: unknown): GuideLevel[] {
@@ -161,22 +159,6 @@ export async function updateExcursion(
       updatedAt: serverTimestamp(),
       updatedBy: actorUid,
     });
-  });
-}
-
-export async function listExcursionApplications(excursionId: string) {
-  const applicationsCollection = collection(db, 'excursions', excursionId, 'applications');
-  const snapshot = await getDocs(query(applicationsCollection, orderBy('createdAt')));
-
-  return snapshot.docs.map((application): ExcursionApplicationSummary => {
-    const data = application.data();
-    return {
-      id: application.id,
-      guideUid: data.guideUid ?? application.id,
-      guideEmail: data.guideEmail ?? '',
-      status: data.status === 'accepted' || data.status === 'rejected' ? data.status : 'pending',
-      createdAt: data.createdAt instanceof Timestamp ? data.createdAt : null,
-    };
   });
 }
 

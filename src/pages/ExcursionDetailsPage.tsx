@@ -1,26 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Users } from 'lucide-react';
+import { ArrowRight, Pencil, Users } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { companyKeys, listCompanies } from '../entities/company/company.api';
+import {
+  applicationKeys,
+  listApplicationsForExcursion,
+} from '../entities/application/application.api';
 import {
   deleteExcursion,
   excursionKeys,
   getExcursion,
-  listExcursionApplications,
 } from '../entities/excursion/excursion.api';
 import { PAYMENT_STATUS_LABELS } from '../entities/excursion/excursion.types';
 import { GUIDE_LEVEL_LABELS } from '../entities/guide/guide.types';
+import { guideKeys, listGuides } from '../entities/guide/guide.api';
+import { ApplicationCard } from '../features/decide-application/ApplicationCard';
 import { getErrorMessage } from '../shared/lib/errors';
-import { formatDateRange, formatTimestamp } from '../shared/lib/format';
+import { formatDateRange } from '../shared/lib/format';
 import { ErrorState, PageLoading } from '../shared/ui/AsyncState';
 import { DeleteButton } from '../shared/ui/DeleteButton';
 import { PageHeader } from '../shared/ui/PageHeader';
-
-const APPLICATION_LABELS = {
-  pending: 'Ожидает',
-  accepted: 'Принята',
-  rejected: 'Отклонена',
-};
 
 export function ExcursionDetailsPage() {
   const { excursionId = '' } = useParams();
@@ -32,9 +31,10 @@ export function ExcursionDetailsPage() {
     enabled: Boolean(excursionId),
   });
   const companiesQuery = useQuery({ queryKey: companyKeys.all, queryFn: listCompanies });
+  const guidesQuery = useQuery({ queryKey: guideKeys.all, queryFn: listGuides });
   const applicationsQuery = useQuery({
-    queryKey: excursionKeys.applications(excursionId),
-    queryFn: () => listExcursionApplications(excursionId),
+    queryKey: applicationKeys.byExcursion(excursionId),
+    queryFn: () => listApplicationsForExcursion(excursionId),
     enabled: Boolean(excursionId),
   });
   const deleteMutation = useMutation({
@@ -108,22 +108,31 @@ export function ExcursionDetailsPage() {
       <section className="related-card">
         <div className="section-heading">
           <div><p className="eyebrow">Заявки</p><h2>Заявки гидов</h2></div>
-          <span className="count-badge">{applicationsQuery.data?.length ?? 0}</span>
+          <div className="section-heading-actions">
+            <span className="count-badge">{applicationsQuery.data?.length ?? 0}</span>
+            <Link className="inline-link" to={`/excursions/${excursionId}/applications`}>
+              Все заявки <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
         {applicationsQuery.isPending && <div className="inline-status">Загружаем заявки...</div>}
         {applicationsQuery.isError && <p className="form-error">{getErrorMessage(applicationsQuery.error)}</p>}
         {applicationsQuery.isSuccess && applicationsQuery.data.length === 0 && <div className="inline-empty">Заявок пока нет.</div>}
         {applicationsQuery.isSuccess && applicationsQuery.data.length > 0 && (
-          <div className="application-list">
-            {applicationsQuery.data.map((application) => (
-              <div className="application-row" key={application.id}>
-                <div><strong>{application.guideEmail || application.guideUid}</strong><span>{formatTimestamp(application.createdAt)}</span></div>
-                <span className={`application-badge application-${application.status}`}>{APPLICATION_LABELS[application.status]}</span>
-              </div>
+          <div className="moderation-list compact-moderation-list">
+            {applicationsQuery.data.slice(0, 3).map((application) => (
+              <ApplicationCard
+                application={application}
+                guideName={guidesQuery.data?.find((guide) => guide.uid === application.guideUid)?.name}
+                key={application.id}
+                showExcursion={false}
+              />
             ))}
           </div>
         )}
-        <p className="section-note">Принятие и отклонение заявок будет добавлено на Step 7.</p>
+        {applicationsQuery.isSuccess && applicationsQuery.data.length > 3 && (
+          <p className="section-note">Показаны первые 3 заявки. Полный список доступен по ссылке выше.</p>
+        )}
       </section>
 
       <section className="danger-zone">
