@@ -1,0 +1,47 @@
+/* GlobalStyles.css
+   Общие стили для элементов форм по всему приложению. */
+/* Global input styling */
+input, textarea, select {
+  background-color: white !important;
+  color: black !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  transition: border-color 0.2s ease !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Ensure text is always black in inputs */
+input[type="text"], 
+input[type="email"], 
+input[type="tel"], 
+input[type="number"], 
+input[type="date"], 
+input[type="datetime-local"], 
+input[type="password"],
+textarea,
+select {
+  background: white !important;
+  color: black !important;
+}
+
+/* Override any dark mode or theme styles */
+.dark input, 
+.dark textarea, 
+.dark select,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: white !important;
+  color: black !important;
+}
