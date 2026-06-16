@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "tourapp-66e02"
-  }
+  },
+  "targets": {
+    "tourapp-66e02": {
+      "hosting": {
+        "admin": [
+          "traveltech-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
