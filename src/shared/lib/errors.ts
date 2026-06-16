@@ -4,7 +4,7 @@ const FIREBASE_MESSAGES: Record<string, string> = {
   'permission-denied': 'Недостаточно прав для выполнения операции.',
   'not-found': 'Запись не найдена.',
   'already-exists': 'Запись с таким идентификатором уже существует.',
-  unavailable: 'Firebase временно недоступен. Повторите попытку.',
+  unavailable: 'Сервис временно недоступен. Повторите попытку.',
 };
 
 export function getErrorMessage(error: unknown) {

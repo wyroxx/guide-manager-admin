@@ -8,13 +8,6 @@ import {
 } from '../../entities/guide/guide.types';
 
 const guideSchema = z.object({
-  uid: z
-    .string()
-    .trim()
-    .min(1, 'Укажите ID Firebase Auth аккаунта.')
-    .max(128, 'ID аккаунта слишком длинный.')
-    .refine((value) => !value.includes('/'), 'ID аккаунта не должен содержать символ /.')
-    .refine((value) => value !== '.' && value !== '..', 'Недопустимый ID аккаунта.'),
   email: z.string().trim().min(1, 'Укажите email.').email('Укажите корректный email.'),
   name: z.string().trim().min(2, 'Имя должно содержать минимум 2 символа.').max(120),
   phone: z.string().trim().max(40).optional(),
@@ -26,14 +19,12 @@ type GuideFormValues = z.infer<typeof guideSchema>;
 
 interface GuideFormProps {
   initialValues?: GuideInput;
-  mode: 'create' | 'edit';
   pending?: boolean;
   serverError?: string | null;
   onSubmit: (values: GuideInput) => Promise<void>;
 }
 
 const emptyValues: GuideFormValues = {
-  uid: '',
   email: '',
   name: '',
   phone: '',
@@ -43,7 +34,6 @@ const emptyValues: GuideFormValues = {
 
 export function GuideForm({
   initialValues,
-  mode,
   onSubmit,
   pending = false,
   serverError,
@@ -60,15 +50,6 @@ export function GuideForm({
   return (
     <form className="entity-form" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="form-grid">
-        <div className="field field-wide">
-          <label htmlFor="uid">ID Firebase Auth аккаунта</label>
-          <input id="uid" {...register('uid')} disabled={mode === 'edit'} />
-          {errors.uid && <span className="field-error">{errors.uid.message}</span>}
-          <span className="field-hint">
-            Нужно только для ручного добавления. После создания изменить ID нельзя.
-          </span>
-        </div>
-
         <div className="field">
           <label htmlFor="name">Имя</label>
           <input id="name" {...register('name')} autoComplete="name" />
@@ -108,7 +89,7 @@ export function GuideForm({
 
       <div className="form-actions">
         <button type="submit" disabled={pending}>
-          {pending ? 'Сохраняем...' : mode === 'create' ? 'Создать гида' : 'Сохранить изменения'}
+          {pending ? 'Сохраняем...' : 'Сохранить изменения'}
         </button>
       </div>
     </form>

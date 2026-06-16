@@ -16,7 +16,6 @@ export interface Application {
   excursionStartDate: Timestamp | null;
   excursionMaxParticipants: number;
   guideUid: string;
-  guideName: string;
   guideEmail: string;
   status: ApplicationStatus;
   createdAt: Timestamp | null;

@@ -11,7 +11,9 @@ service cloud.firestore {
     }
 
     function hasEmail() {
-      return isSignedIn() && userEmail() is string && userEmail().size() > 0;
+      return isSignedIn()
+        && userEmail() is string
+        && userEmail().size() > 0;
     }
 
     function isAdmin() {
@@ -107,22 +109,30 @@ service cloud.firestore {
       );
     }
 
+    function companyAllowsEmail(companyId, email) {
+      let companyPath = /databases/$(database)/documents/companies/$(companyId);
+
+      return exists(companyPath)
+        && get(companyPath).data.banList is list
+        && !(email in get(companyPath).data.banList);
+    }
+
+    function companyAllowsGuide(companyId) {
+      return companyAllowsEmail(companyId, userEmail());
+    }
+
     function canReadExcursion(excursionId) {
       return isApprovedGuide()
         && (
           userEmail() in resource.data.assignedGuides
+          || hasOwnApplication(excursionId)
           || (
             resource.data.hasSpots == true
             && resource.data.requiredLevels.hasAny([get(guidePath()).data.level])
+            && !(userEmail() in resource.data.assignedGuides)
+            && companyAllowsGuide(resource.data.companyId)
           )
-          || hasOwnApplication(excursionId)
         );
-    }
-
-    function companyAllowsGuide(companyId) {
-      let companyPath = /databases/$(database)/documents/companies/$(companyId);
-      return exists(companyPath)
-        && !(userEmail() in get(companyPath).data.banList);
     }
 
     function validApplicationCreate(excursionId, applicationId) {
@@ -139,13 +149,11 @@ service cloud.firestore {
           'excursionStartDate',
           'excursionTitle',
           'guideEmail',
-          'guideName',
           'guideUid',
           'status'
         ])
         && request.resource.data.guideUid == request.auth.uid
         && request.resource.data.guideEmail == userEmail()
-        && request.resource.data.guideName == get(guidePath()).data.name
         && request.resource.data.excursionId == excursionId
         && request.resource.data.excursionTitle == excursion.title
         && request.resource.data.excursionStartDate == excursion.startDate
@@ -160,29 +168,30 @@ service cloud.firestore {
 
     function validApplicationDecision(excursionId) {
       let excursionPath = /databases/$(database)/documents/excursions/$(excursionId);
+      let beforeExcursion = get(excursionPath).data;
+      let afterExcursion = getAfter(excursionPath).data;
+      let guideDocPath = guidePathByUid(resource.data.guideUid);
+      let guide = get(guideDocPath).data;
 
       return isAdmin()
+        && exists(excursionPath)
+
         && resource.data.status == 'pending'
         && request.resource.data.status in ['accepted', 'rejected']
+
         && request.resource.data.guideUid == resource.data.guideUid
         && request.resource.data.guideEmail == resource.data.guideEmail
-        && (
-          (
-            'guideName' in resource.data
-            && request.resource.data.guideName == resource.data.guideName
-          )
-          || (
-            !('guideName' in resource.data)
-            && !('guideName' in request.resource.data)
-          )
-        )
+
         && request.resource.data.excursionId == resource.data.excursionId
+        && request.resource.data.excursionId == excursionId
         && request.resource.data.excursionTitle == resource.data.excursionTitle
         && request.resource.data.excursionStartDate == resource.data.excursionStartDate
         && request.resource.data.excursionMaxParticipants == resource.data.excursionMaxParticipants
         && request.resource.data.createdAt == resource.data.createdAt
+
         && request.resource.data.decidedAt == request.time
         && request.resource.data.decidedBy == request.auth.uid
+
         && (
           !('decisionComment' in request.resource.data)
           || (
@@ -190,17 +199,37 @@ service cloud.firestore {
             && request.resource.data.decisionComment.size() <= 500
           )
         )
+
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'status',
           'decidedAt',
           'decidedBy',
           'decisionComment'
         ])
+
         && (
           request.resource.data.status == 'rejected'
-          || (
-            request.resource.data.guideEmail in getAfter(excursionPath).data.assignedGuides
-            && validExcursionData(getAfter(excursionPath).data)
+
+          ||
+
+          (
+            request.resource.data.status == 'accepted'
+
+            && exists(guideDocPath)
+            && guide.email == resource.data.guideEmail
+            && guide.isApproved == true
+            && isGuideLevel(guide.level)
+
+            && beforeExcursion.hasSpots == true
+            && beforeExcursion.requiredLevels.hasAny([guide.level])
+            && !(resource.data.guideEmail in beforeExcursion.assignedGuides)
+            && companyAllowsEmail(beforeExcursion.companyId, resource.data.guideEmail)
+
+            && resource.data.guideEmail in afterExcursion.assignedGuides
+            && afterExcursion.assignedGuides.hasAll(beforeExcursion.assignedGuides)
+            && afterExcursion.assignedGuides.size() == beforeExcursion.assignedGuides.size() + 1
+
+            && validExcursionData(afterExcursion)
           )
         );
     }
@@ -208,41 +237,56 @@ service cloud.firestore {
     match /guides/{guideId} {
       allow get: if isAdmin()
         || (isSignedIn() && guideId == request.auth.uid);
+
       allow list: if isAdmin();
-      allow create: if isAdmin() || validGuideRequestCreate(guideId);
+
+      allow create: if validGuideRequestCreate(guideId);
+
       allow update, delete: if isAdmin();
     }
 
     match /companies/{companyId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin()
-        || (
-          isApprovedGuide()
-          && request.auth.token.email in resource.data.banList
-        );
+      allow get, list: if isAdmin();
+
       allow create, update, delete: if isAdmin();
     }
 
     match /excursions/{excursionId} {
-      allow read: if isAdmin() || canReadExcursion(excursionId);
+      allow read: if isAdmin()
+        || canReadExcursion(excursionId);
+
       allow create, update: if isAdmin()
         && validExcursionData(request.resource.data);
+
       allow delete: if isAdmin();
 
       match /applications/{applicationId} {
         allow get: if isAdmin()
-          || (isApprovedGuide() && applicationId == request.auth.uid);
+          || (
+            isApprovedGuide()
+            && applicationId == request.auth.uid
+          );
+
         allow list: if isAdmin()
-          || (isApprovedGuide() && resource.data.guideUid == request.auth.uid);
+          || (
+            isApprovedGuide()
+            && resource.data.guideUid == request.auth.uid
+          );
+
         allow create: if validApplicationCreate(excursionId, applicationId);
+
         allow update: if validApplicationDecision(excursionId);
+
         allow delete: if isAdmin();
       }
     }
 
     match /{path=**}/applications/{applicationId} {
       allow read: if isAdmin()
-        || (isApprovedGuide() && resource.data.guideUid == request.auth.uid);
+        || (
+          isApprovedGuide()
+          && resource.data.guideUid == request.auth.uid
+        );
     }
 
     match /{document=**} {

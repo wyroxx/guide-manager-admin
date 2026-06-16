@@ -43,7 +43,6 @@ function applicationFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>):
       ? data.excursionMaxParticipants
       : 0,
     guideUid: data.guideUid ?? snapshot.id,
-    guideName: data.guideName ?? '',
     guideEmail: data.guideEmail ?? '',
     status: applicationStatus(data.status),
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt : null,

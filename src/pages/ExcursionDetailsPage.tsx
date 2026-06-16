@@ -123,7 +123,7 @@ export function ExcursionDetailsPage() {
             {applicationsQuery.data.slice(0, 3).map((application) => (
               <ApplicationCard
                 application={application}
-                guideName={guidesQuery.data?.find((guide) => guide.uid === application.guideUid)?.name}
+                guideDisplayName={guidesQuery.data?.find((guide) => guide.uid === application.guideUid)?.name}
                 key={application.id}
                 showExcursion={false}
               />

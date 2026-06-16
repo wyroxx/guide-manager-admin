@@ -12,7 +12,6 @@ import { ExcursionCreatePage } from '../pages/ExcursionCreatePage';
 import { ExcursionDetailsPage } from '../pages/ExcursionDetailsPage';
 import { ExcursionEditPage } from '../pages/ExcursionEditPage';
 import { ExcursionsPage } from '../pages/ExcursionsPage';
-import { GuideCreatePage } from '../pages/GuideCreatePage';
 import { GuideDetailsPage } from '../pages/GuideDetailsPage';
 import { GuideEditPage } from '../pages/GuideEditPage';
 import { GuidesPage } from '../pages/GuidesPage';
@@ -35,7 +34,6 @@ export function AppRouter() {
           <Route path="dashboard" element={<Navigate to="/" replace />} />
 
           <Route path="guides" element={<GuidesPage />} />
-          <Route path="guides/new" element={<GuideCreatePage />} />
           <Route path="guides/:uid" element={<GuideDetailsPage />} />
           <Route path="guides/:uid/edit" element={<GuideEditPage />} />
 

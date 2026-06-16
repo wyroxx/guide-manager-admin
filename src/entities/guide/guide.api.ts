@@ -8,7 +8,6 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   type DocumentData,
   type QueryDocumentSnapshot,
@@ -61,36 +60,9 @@ export async function getGuide(uid: string) {
   return snapshot.exists() ? guideFromData(snapshot.id, snapshot.data()) : null;
 }
 
-export async function createGuide(input: GuideInput, actorUid: string) {
-  const guideRef = doc(guidesCollection, input.uid.trim());
-  const existing = await getDoc(guideRef);
-
-  if (existing.exists()) {
-    throw new Error('Гид с таким ID аккаунта уже существует.');
-  }
-
-  const phone = optional(input.phone);
-  const telegramAlias = optional(input.telegramAlias);
-
-  await setDoc(guideRef, {
-    uid: input.uid.trim(),
-    email: input.email.trim().toLowerCase(),
-    name: input.name.trim(),
-    ...(phone ? { phone } : {}),
-    ...(telegramAlias ? { telegramAlias } : {}),
-    level: input.level,
-    isApproved: true,
-    toursCount: 0,
-    createdAt: serverTimestamp(),
-    createdBy: actorUid,
-    updatedAt: serverTimestamp(),
-    updatedBy: actorUid,
-  });
-}
-
 export async function updateGuide(
   uid: string,
-  input: Omit<GuideInput, 'uid'>,
+  input: GuideInput,
   actorUid: string,
 ) {
   const phone = optional(input.phone);

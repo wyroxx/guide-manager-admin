@@ -82,18 +82,23 @@ export function GuideDetailsPage() {
           <div>
             <h2>Одобрить гида</h2>
             <p>
-              После одобрения гид получит доступ к Flutter-приложению и сможет видеть подходящие экскурсии.
+              После одобрения гид сможет видеть подходящие экскурсии и подавать заявки.
             </p>
             {!isGuideLevel(guide.level) && <p className="form-error">Перед одобрением назначьте уровень гида.</p>}
             {approveMutation.isError && <p className="form-error">{getErrorMessage(approveMutation.error)}</p>}
           </div>
           {isGuideLevel(guide.level) ? (
-            <button type="button" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate()}>
+            <button
+              className="approval-zone-action"
+              type="button"
+              disabled={approveMutation.isPending}
+              onClick={() => approveMutation.mutate()}
+            >
               <Check size={17} />
               {approveMutation.isPending ? 'Одобряем...' : 'Одобрить доступ'}
             </button>
           ) : (
-            <Link className="button-link" to={`/guides/${guide.uid}/edit`}>Назначить уровень</Link>
+            <Link className="button-link approval-zone-action" to={`/guides/${guide.uid}/edit`}>Назначить уровень</Link>
           )}
         </section>
       )}
@@ -101,7 +106,7 @@ export function GuideDetailsPage() {
       <section className="danger-zone">
         <div>
           <h2>Удалить доступ гида</h2>
-          <p>Документ гида будет удалён. Firebase Auth аккаунт останется активным.</p>
+          <p>Документ гида будет удалён. Аккаунт пользователя останется активным.</p>
           {deleteMutation.isError && <p className="form-error">{getErrorMessage(deleteMutation.error)}</p>}
         </div>
         <DeleteButton

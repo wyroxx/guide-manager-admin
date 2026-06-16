@@ -33,7 +33,6 @@ export interface Guide {
 }
 
 export interface GuideInput {
-  uid: string;
   email: string;
   name: string;
   phone?: string;

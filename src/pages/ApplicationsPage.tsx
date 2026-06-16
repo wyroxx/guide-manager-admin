@@ -68,7 +68,7 @@ export function ApplicationsPage() {
 
       const excursion = excursionById.get(application.excursionId);
       const guide = guideByUid.get(application.guideUid);
-      return `${guide?.name ?? application.guideName} ${application.guideEmail} ${excursion?.title ?? application.excursionTitle}`
+      return `${guide?.name ?? ''} ${application.guideEmail} ${excursion?.title ?? application.excursionTitle}`
         .toLocaleLowerCase('ru')
         .includes(needle);
     });
@@ -163,7 +163,7 @@ export function ApplicationsPage() {
             <ApplicationCard
               application={application}
               excursionTitle={excursionById.get(application.excursionId)?.title}
-              guideName={guideByUid.get(application.guideUid)?.name}
+              guideDisplayName={guideByUid.get(application.guideUid)?.name}
               key={`${application.excursionId}-${application.id}`}
               showExcursion={!excursionId}
             />

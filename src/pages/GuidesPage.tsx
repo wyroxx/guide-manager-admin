@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Plus, Search, Users } from 'lucide-react';
+import { Check, Search, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { approveGuide, guideKeys, listGuides } from '../entities/guide/guide.api';
@@ -41,13 +41,7 @@ export function GuidesPage() {
       <PageHeader
         eyebrow="Команда"
         title="Гиды"
-        description="Заявки на доступ, допущенные пользователи Flutter-приложения и их уровни."
-        actions={(
-          <Link className="button-link" to="/guides/new">
-            <Plus size={18} />
-            Добавить гида
-          </Link>
-        )}
+        description="Заявки на доступ, одобренные гиды и их уровни."
       />
 
       <div className="toolbar">

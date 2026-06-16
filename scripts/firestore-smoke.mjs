@@ -111,6 +111,15 @@ try {
     hasSpots: true,
   }));
 
+  await assertFails(setDoc(doc(adminDb, 'guides/admin-created-guide'), {
+    email: 'admin-created@example.com',
+    isApproved: true,
+    level: 'middle',
+    name: 'Admin Created',
+    toursCount: 0,
+    uid: 'admin-created-guide',
+  }));
+
   await assertSucceeds(setDoc(doc(pendingGuideDb, 'guides/pending-guide'), {
     avatar: '',
     bio: '',
@@ -136,7 +145,6 @@ try {
   await assertSucceeds(setDoc(doc(pendingGuideDb, 'excursions/smoke-valid/applications/pending-guide'), {
     guideUid: 'pending-guide',
     guideEmail: 'pending-guide@example.com',
-    guideName: 'Pending Guide',
     status: 'pending',
     excursionId: 'smoke-valid',
     excursionTitle: validExcursion.title,
@@ -147,7 +155,6 @@ try {
 
   const applicationData = {
     guideUid: 'guide-smoke',
-    guideName: 'Smoke Guide',
     guideEmail,
     status: 'pending',
     excursionId: 'smoke-valid',

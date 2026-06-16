@@ -48,9 +48,7 @@ export function GuideEditPage() {
       />
       <section className="form-card">
         <GuideForm
-          mode="edit"
           initialValues={{
-            uid: guide.uid,
             email: guide.email,
             name: guide.name,
             phone: guide.phone ?? '',
