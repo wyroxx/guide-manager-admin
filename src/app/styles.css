@@ -230,9 +230,13 @@ form button { margin-top: 1rem; width: 100%; }
 
 .level-badge { display: inline-flex; align-items: center; min-height: 27px; border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.73rem; font-weight: 700; }
 .level-trainee { color: var(--warning); background: var(--warning-soft); }
+.level-unset { color: var(--text-secondary); background: var(--surface-muted); }
 .level-junior { color: var(--success); background: var(--success-soft); }
 .level-middle { color: var(--accent); background: var(--accent-soft); }
 .level-senior { color: var(--danger); background: var(--danger-soft); }
+.approval-badge { display: inline-flex; align-items: center; min-height: 27px; border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.approval-approved { color: var(--success); background: var(--success-soft); }
+.approval-pending { color: var(--warning); background: var(--warning-soft); }
 
 .empty-state, .content-state { display: grid; min-height: 280px; border: 1px dashed var(--border-strong); border-radius: 14px; padding: 2rem; place-content: center; place-items: center; color: var(--text-secondary); text-align: center; }
 .empty-state svg { margin-bottom: 1rem; color: var(--accent); }
@@ -264,9 +268,11 @@ form button { margin-top: 1rem; width: 100%; }
 .mono-value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
 .preserve-lines { white-space: pre-wrap; }
 
-.danger-zone { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-top: 1.5rem; border: 1px solid var(--danger); border-radius: 14px; padding: 1.4rem; background: var(--danger-soft); }
-.danger-zone h2 { margin-bottom: 0.4rem; font-size: 1.35rem; }
-.danger-zone p { margin-bottom: 0; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.55; }
+.danger-zone, .approval-zone { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-top: 1.5rem; border-radius: 14px; padding: 1.4rem; }
+.danger-zone { border: 1px solid var(--danger); background: var(--danger-soft); }
+.approval-zone { border: 1px solid var(--success); background: var(--success-soft); }
+.danger-zone h2, .approval-zone h2 { margin-bottom: 0.4rem; font-size: 1.35rem; }
+.danger-zone p, .approval-zone p { margin-bottom: 0; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.55; }
 .danger-button { background: var(--danger); }
 .danger-button:hover { background: var(--danger); filter: brightness(0.9); }
 .danger-button.secondary-button { border-color: var(--danger); color: var(--danger); background: transparent; }
@@ -508,7 +514,7 @@ form button { margin-top: 1rem; width: 100%; }
   .form-grid, .details-grid { grid-template-columns: 1fr; }
   .details-grid > div, .details-grid > div:nth-child(odd), .details-grid > div:nth-child(even) { border-right: 0; border-bottom: 1px solid var(--border); border-left: 0; padding: 1rem 0; }
   .details-grid > div:last-child { border-bottom: 0; }
-  .danger-zone { align-items: stretch; flex-direction: column; }
+  .danger-zone, .approval-zone { align-items: stretch; flex-direction: column; }
   .delete-confirm { justify-content: stretch; }
   .delete-confirm button { flex: 1; }
   .delete-confirm span { text-align: left; }

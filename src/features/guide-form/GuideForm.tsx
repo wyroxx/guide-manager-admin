@@ -11,10 +11,10 @@ const guideSchema = z.object({
   uid: z
     .string()
     .trim()
-    .min(1, 'Укажите Firebase Auth UID.')
-    .max(128, 'UID слишком длинный.')
-    .refine((value) => !value.includes('/'), 'UID не должен содержать символ /.')
-    .refine((value) => value !== '.' && value !== '..', 'Недопустимый UID.'),
+    .min(1, 'Укажите ID Firebase Auth аккаунта.')
+    .max(128, 'ID аккаунта слишком длинный.')
+    .refine((value) => !value.includes('/'), 'ID аккаунта не должен содержать символ /.')
+    .refine((value) => value !== '.' && value !== '..', 'Недопустимый ID аккаунта.'),
   email: z.string().trim().min(1, 'Укажите email.').email('Укажите корректный email.'),
   name: z.string().trim().min(2, 'Имя должно содержать минимум 2 символа.').max(120),
   phone: z.string().trim().max(40).optional(),
@@ -61,11 +61,11 @@ export function GuideForm({
     <form className="entity-form" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="form-grid">
         <div className="field field-wide">
-          <label htmlFor="uid">Firebase Auth UID</label>
+          <label htmlFor="uid">ID Firebase Auth аккаунта</label>
           <input id="uid" {...register('uid')} disabled={mode === 'edit'} />
           {errors.uid && <span className="field-error">{errors.uid.message}</span>}
           <span className="field-hint">
-            UID пользователь видит в Flutter-приложении. После создания изменить его нельзя.
+            Нужно только для ручного добавления. После создания изменить ID нельзя.
           </span>
         </div>
 

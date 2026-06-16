@@ -14,7 +14,7 @@ import {
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../firebase/client';
-import { type Guide, type GuideInput } from './guide.types';
+import { isGuideLevel, type Guide, type GuideInput, type GuideLevelValue } from './guide.types';
 
 const guidesCollection = collection(db, 'guides');
 
@@ -29,13 +29,16 @@ function optional(value: string | undefined) {
 }
 
 function guideFromData(id: string, data: DocumentData): Guide {
+  const level: GuideLevelValue = isGuideLevel(data.level) ? data.level : '';
+
   return {
     uid: id,
     email: data.email ?? '',
     name: data.name ?? '',
     phone: data.phone,
     telegramAlias: data.telegramAlias,
-    level: data.level ?? 'trainee',
+    level,
+    isApproved: data.isApproved === true,
     toursCount: data.toursCount ?? 0,
     createdAt: data.createdAt ?? null,
     createdBy: data.createdBy ?? '',
@@ -63,7 +66,7 @@ export async function createGuide(input: GuideInput, actorUid: string) {
   const existing = await getDoc(guideRef);
 
   if (existing.exists()) {
-    throw new Error('Гид с таким UID уже существует.');
+    throw new Error('Гид с таким ID аккаунта уже существует.');
   }
 
   const phone = optional(input.phone);
@@ -76,6 +79,7 @@ export async function createGuide(input: GuideInput, actorUid: string) {
     ...(phone ? { phone } : {}),
     ...(telegramAlias ? { telegramAlias } : {}),
     level: input.level,
+    isApproved: true,
     toursCount: 0,
     createdAt: serverTimestamp(),
     createdBy: actorUid,
@@ -98,6 +102,29 @@ export async function updateGuide(
     phone: phone ?? deleteField(),
     telegramAlias: telegramAlias ?? deleteField(),
     level: input.level,
+    updatedAt: serverTimestamp(),
+    updatedBy: actorUid,
+  });
+}
+
+export async function approveGuide(uid: string, actorUid: string) {
+  const guideRef = doc(guidesCollection, uid);
+  const snapshot = await getDoc(guideRef);
+  if (!snapshot.exists()) throw new Error('Гид не найден.');
+
+  const guide = snapshot.data();
+  if (!isGuideLevel(guide.level)) {
+    throw new Error('Перед одобрением назначьте уровень гида.');
+  }
+  if (typeof guide.email !== 'string' || !guide.email.trim()) {
+    throw new Error('Перед одобрением укажите email гида.');
+  }
+  if (typeof guide.name !== 'string' || !guide.name.trim()) {
+    throw new Error('Перед одобрением укажите имя гида.');
+  }
+
+  await updateDoc(guideRef, {
+    isApproved: true,
     updatedAt: serverTimestamp(),
     updatedBy: actorUid,
   });

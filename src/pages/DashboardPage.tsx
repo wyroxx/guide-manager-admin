@@ -78,9 +78,9 @@ export function DashboardPage() {
           <h2>Добавить данные</h2>
         </div>
         <div className="quick-action-links">
-          <Link className="button-link" to="/guides/new"><Plus size={17} /> Новый гид</Link>
+          <Link className="button-link" to="/excursions/new"><Plus size={17} />  Новая экскурсия</Link>
           <Link className="button-link secondary-button" to="/companies/new"><Plus size={17} /> Новая компания</Link>
-          <Link className="button-link secondary-button" to="/excursions/new"><Plus size={17} /> Новая экскурсия</Link>
+          <Link className="button-link secondary-button" to="/guides/new"><Plus size={17} /> Новый гид</Link>
           <Link className="button-link secondary-button" to="/applications"><ClipboardCheck size={17} /> Открыть заявки</Link>
         </div>
       </section>

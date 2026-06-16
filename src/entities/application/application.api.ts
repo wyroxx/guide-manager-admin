@@ -43,6 +43,7 @@ function applicationFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>):
       ? data.excursionMaxParticipants
       : 0,
     guideUid: data.guideUid ?? snapshot.id,
+    guideName: data.guideName ?? '',
     guideEmail: data.guideEmail ?? '',
     status: applicationStatus(data.status),
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt : null,
@@ -113,6 +114,9 @@ export async function acceptApplication(
     if (!companySnapshot.exists()) throw new Error('Компания экскурсии не найдена.');
 
     const guide = guideSnapshot.data();
+    if (guide.isApproved !== true) {
+      throw new Error('Сначала одобрите гида.');
+    }
     const company = companySnapshot.data();
     const decision = validateApplicationAcceptance({
       applicationStatus: application.status,

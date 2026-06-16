@@ -27,7 +27,7 @@ export function ApplicationCard({
           <div className="moderation-guide">
             <span className="moderation-avatar"><UserRound size={18} /></span>
             <div>
-              <strong>{guideName || application.guideEmail || application.guideUid}</strong>
+              <strong>{guideName || application.guideName || application.guideEmail || 'Гид без имени'}</strong>
               <span>{application.guideEmail}</span>
             </div>
           </div>

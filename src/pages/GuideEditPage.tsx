@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getGuide, guideKeys, updateGuide } from '../entities/guide/guide.api';
-import { type GuideInput } from '../entities/guide/guide.types';
+import { isGuideLevel, type GuideInput } from '../entities/guide/guide.types';
 import { useAuth } from '../features/auth/AuthProvider';
 import { GuideForm } from '../features/guide-form/GuideForm';
 import { getErrorMessage } from '../shared/lib/errors';
@@ -55,7 +55,7 @@ export function GuideEditPage() {
             name: guide.name,
             phone: guide.phone ?? '',
             telegramAlias: guide.telegramAlias ?? '',
-            level: guide.level,
+            level: isGuideLevel(guide.level) ? guide.level : 'trainee',
           }}
           pending={mutation.isPending}
           serverError={mutation.error ? getErrorMessage(mutation.error) : null}

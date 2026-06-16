@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil } from 'lucide-react';
+import { Check, Pencil } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { deleteGuide, getGuide, guideKeys } from '../entities/guide/guide.api';
-import { GUIDE_LEVEL_LABELS } from '../entities/guide/guide.types';
+import { approveGuide, deleteGuide, getGuide, guideKeys } from '../entities/guide/guide.api';
+import { GUIDE_LEVEL_LABELS, isGuideLevel } from '../entities/guide/guide.types';
+import { useAuth } from '../features/auth/AuthProvider';
 import { getErrorMessage } from '../shared/lib/errors';
 import { formatTimestamp } from '../shared/lib/format';
 import { ErrorState, PageLoading } from '../shared/ui/AsyncState';
@@ -11,6 +12,7 @@ import { PageHeader } from '../shared/ui/PageHeader';
 
 export function GuideDetailsPage() {
   const { uid = '' } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const guideQuery = useQuery({
@@ -26,13 +28,25 @@ export function GuideDetailsPage() {
       navigate('/guides', { replace: true });
     },
   });
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Сессия администратора недоступна.');
+      await approveGuide(uid, user.uid);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: guideKeys.all }),
+        queryClient.invalidateQueries({ queryKey: guideKeys.detail(uid) }),
+      ]);
+    },
+  });
 
   if (guideQuery.isPending) return <main className="page-content"><PageLoading /></main>;
   if (guideQuery.isError) {
     return <main className="page-content"><ErrorState message={getErrorMessage(guideQuery.error)} onRetry={() => void guideQuery.refetch()} /></main>;
   }
   if (!guideQuery.data) {
-    return <main className="page-content"><ErrorState message="Гид с таким UID не найден." /></main>;
+    return <main className="page-content"><ErrorState message="Гид не найден." /></main>;
   }
 
   const guide = guideQuery.data;
@@ -54,14 +68,35 @@ export function GuideDetailsPage() {
 
       <section className="details-card">
         <dl className="details-grid">
-          <div><dt>UID</dt><dd className="mono-value">{guide.uid}</dd></div>
-          <div><dt>Уровень</dt><dd><span className={`level-badge level-${guide.level}`}>{GUIDE_LEVEL_LABELS[guide.level]}</span></dd></div>
+          <div><dt>Статус доступа</dt><dd><span className={`approval-badge ${guide.isApproved ? 'approval-approved' : 'approval-pending'}`}>{guide.isApproved ? 'Одобрен' : 'Ожидает одобрения'}</span></dd></div>
+          <div><dt>Уровень</dt><dd><span className={`level-badge level-${guide.level || 'unset'}`}>{GUIDE_LEVEL_LABELS[guide.level]}</span></dd></div>
           <div><dt>Телефон</dt><dd>{guide.phone || '—'}</dd></div>
           <div><dt>Telegram</dt><dd>{guide.telegramAlias || '—'}</dd></div>
           <div><dt>Проведено экскурсий</dt><dd>{guide.toursCount}</dd></div>
           <div><dt>Обновлён</dt><dd>{formatTimestamp(guide.updatedAt)}</dd></div>
         </dl>
       </section>
+
+      {!guide.isApproved && (
+        <section className="approval-zone">
+          <div>
+            <h2>Одобрить гида</h2>
+            <p>
+              После одобрения гид получит доступ к Flutter-приложению и сможет видеть подходящие экскурсии.
+            </p>
+            {!isGuideLevel(guide.level) && <p className="form-error">Перед одобрением назначьте уровень гида.</p>}
+            {approveMutation.isError && <p className="form-error">{getErrorMessage(approveMutation.error)}</p>}
+          </div>
+          {isGuideLevel(guide.level) ? (
+            <button type="button" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate()}>
+              <Check size={17} />
+              {approveMutation.isPending ? 'Одобряем...' : 'Одобрить доступ'}
+            </button>
+          ) : (
+            <Link className="button-link" to={`/guides/${guide.uid}/edit`}>Назначить уровень</Link>
+          )}
+        </section>
+      )}
 
       <section className="danger-zone">
         <div>

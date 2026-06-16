@@ -1,16 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Plus, Search, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { guideKeys, listGuides } from '../entities/guide/guide.api';
-import { GUIDE_LEVEL_LABELS } from '../entities/guide/guide.types';
+import { approveGuide, guideKeys, listGuides } from '../entities/guide/guide.api';
+import { GUIDE_LEVEL_LABELS, isGuideLevel } from '../entities/guide/guide.types';
+import { useAuth } from '../features/auth/AuthProvider';
 import { getErrorMessage } from '../shared/lib/errors';
 import { ErrorState, PageLoading } from '../shared/ui/AsyncState';
 import { PageHeader } from '../shared/ui/PageHeader';
 
 export function GuidesPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
   const guidesQuery = useQuery({ queryKey: guideKeys.all, queryFn: listGuides });
+  const approveMutation = useMutation({
+    mutationFn: async (uid: string) => {
+      if (!user) throw new Error('Сессия администратора недоступна.');
+      await approveGuide(uid, user.uid);
+    },
+    onSuccess: async (_, uid) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: guideKeys.all }),
+        queryClient.invalidateQueries({ queryKey: guideKeys.detail(uid) }),
+      ]);
+    },
+  });
 
   const filteredGuides = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('ru');
@@ -26,7 +41,7 @@ export function GuidesPage() {
       <PageHeader
         eyebrow="Команда"
         title="Гиды"
-        description="Допущенные пользователи Flutter-приложения и их уровни."
+        description="Заявки на доступ, допущенные пользователи Flutter-приложения и их уровни."
         actions={(
           <Link className="button-link" to="/guides/new">
             <Plus size={18} />
@@ -55,6 +70,7 @@ export function GuidesPage() {
           onRetry={() => void guidesQuery.refetch()}
         />
       )}
+      {approveMutation.isError && <p className="form-error" role="alert">{getErrorMessage(approveMutation.error)}</p>}
 
       {guidesQuery.isSuccess && filteredGuides.length === 0 && (
         <div className="empty-state">
@@ -70,9 +86,11 @@ export function GuidesPage() {
             <thead>
               <tr>
                 <th>Гид</th>
+                <th>Статус</th>
                 <th>Уровень</th>
                 <th>Экскурсий</th>
                 <th>Контакты</th>
+                <th>Действие</th>
               </tr>
             </thead>
             <tbody>
@@ -82,11 +100,31 @@ export function GuidesPage() {
                     <Link className="entity-link" to={`/guides/${guide.uid}`}>{guide.name}</Link>
                     <span className="cell-secondary">{guide.email}</span>
                   </td>
-                  <td><span className={`level-badge level-${guide.level}`}>{GUIDE_LEVEL_LABELS[guide.level]}</span></td>
+                  <td>
+                    <span className={`approval-badge ${guide.isApproved ? 'approval-approved' : 'approval-pending'}`}>
+                      {guide.isApproved ? 'Одобрен' : 'Ожидает'}
+                    </span>
+                  </td>
+                  <td><span className={`level-badge level-${guide.level || 'unset'}`}>{GUIDE_LEVEL_LABELS[guide.level]}</span></td>
                   <td>{guide.toursCount}</td>
                   <td>
                     <span>{guide.phone || '—'}</span>
                     {guide.telegramAlias && <span className="cell-secondary">{guide.telegramAlias}</span>}
+                  </td>
+                  <td>
+                    {guide.isApproved ? '—' : isGuideLevel(guide.level) ? (
+                      <button
+                        className="compact-button"
+                        type="button"
+                        disabled={approveMutation.isPending}
+                        onClick={() => approveMutation.mutate(guide.uid)}
+                      >
+                        <Check size={15} />
+                        Одобрить
+                      </button>
+                    ) : (
+                      <Link className="inline-link" to={`/guides/${guide.uid}/edit`}>Назначить уровень</Link>
+                    )}
                   </td>
                 </tr>
               ))}

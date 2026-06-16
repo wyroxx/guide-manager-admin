@@ -68,7 +68,7 @@ export function ApplicationsPage() {
 
       const excursion = excursionById.get(application.excursionId);
       const guide = guideByUid.get(application.guideUid);
-      return `${guide?.name ?? ''} ${application.guideEmail} ${excursion?.title ?? application.excursionTitle}`
+      return `${guide?.name ?? application.guideName} ${application.guideEmail} ${excursion?.title ?? application.excursionTitle}`
         .toLocaleLowerCase('ru')
         .includes(needle);
     });

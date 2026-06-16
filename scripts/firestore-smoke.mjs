@@ -40,6 +40,7 @@ try {
     });
     await setDoc(doc(context.firestore(), 'guides/guide-smoke'), {
       email: guideEmail,
+      isApproved: true,
       name: 'Smoke Guide',
       level: 'middle',
     });
@@ -54,6 +55,11 @@ try {
   const regularDb = testEnvironment
     .authenticatedContext('regular-smoke', {
       email: 'regular-smoke@example.com',
+    })
+    .firestore();
+  const pendingGuideDb = testEnvironment
+    .authenticatedContext('pending-guide', {
+      email: 'pending-guide@example.com',
     })
     .firestore();
   const companyRef = doc(adminDb, companyRefPath);
@@ -105,8 +111,43 @@ try {
     hasSpots: true,
   }));
 
+  await assertSucceeds(setDoc(doc(pendingGuideDb, 'guides/pending-guide'), {
+    avatar: '',
+    bio: '',
+    createdAt: serverTimestamp(),
+    email: 'pending-guide@example.com',
+    isApproved: false,
+    level: '',
+    name: 'Pending Guide',
+    phone: '',
+    telegramAlias: '',
+    toursCount: 0,
+    uid: 'pending-guide',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(getDoc(doc(pendingGuideDb, 'excursions/smoke-valid')));
+  await assertSucceeds(updateDoc(doc(adminDb, 'guides/pending-guide'), {
+    isApproved: true,
+    level: 'middle',
+    updatedAt: serverTimestamp(),
+    updatedBy: 'admin-smoke',
+  }));
+  await assertSucceeds(getDoc(doc(pendingGuideDb, 'excursions/smoke-valid')));
+  await assertSucceeds(setDoc(doc(pendingGuideDb, 'excursions/smoke-valid/applications/pending-guide'), {
+    guideUid: 'pending-guide',
+    guideEmail: 'pending-guide@example.com',
+    guideName: 'Pending Guide',
+    status: 'pending',
+    excursionId: 'smoke-valid',
+    excursionTitle: validExcursion.title,
+    excursionStartDate: validExcursion.startDate,
+    excursionMaxParticipants: validExcursion.maxParticipants,
+    createdAt: serverTimestamp(),
+  }));
+
   const applicationData = {
     guideUid: 'guide-smoke',
+    guideName: 'Smoke Guide',
     guideEmail,
     status: 'pending',
     excursionId: 'smoke-valid',
